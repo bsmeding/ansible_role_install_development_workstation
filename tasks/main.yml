@@ -1,0 +1,38 @@
+---
+- name: Detect Operating System
+  debug:
+    msg: "Detected OS: {{ ansible_facts.os_family }}"
+
+- name: Include macOS specific tasks
+  include_tasks: osx/main.yml
+  when: ansible_facts.system == "Darwin"
+
+- name: Include Ubuntu specific tasks
+  include_tasks: ubuntu/main.yml
+  when: ansible_facts.os_family == "Debian"
+
+- name: Ensure pip packaging library is installed
+  command: python3 -m pip install --upgrade packaging
+  become: "{{ 'no' if ansible_facts.system == 'Darwin' else 'yes' }}"
+  changed_when: false
+  failed_when: false
+
+- name: Install Python packages (Common)
+  command: python3 -m pip install {{ item }}
+  loop: "{{ common_tools.pip }}"
+  become: "{{ 'no' if ansible_facts.system == 'Darwin' else 'yes' }}"
+  register: pip_install_result
+  changed_when: "'Successfully installed' in pip_install_result.stdout"
+  failed_when: false
+
+- name: Install VSCode extensions (Common)
+  command: code --install-extension {{ item }}
+  loop: "{{ common_tools.vscode_extensions }}"
+  when: common_tools.vscode_extensions is defined and common_tools.vscode_extensions | length > 0
+  failed_when: false
+
+- name: Install Cursor extensions (Common)
+  command: cursor --install-extension {{ item }}
+  loop: "{{ common_tools.vscode_extensions }}"
+  when: common_tools.vscode_extensions is defined and common_tools.vscode_extensions | length > 0
+  failed_when: false

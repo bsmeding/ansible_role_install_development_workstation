@@ -1,0 +1,110 @@
+---
+- name: Set the path for OS-specific vars
+  set_fact:
+    os_vars_file: "vars/{{ 'mac' if ansible_facts.os_family | lower == 'darwin' else ansible_facts.os_family | lower }}.yml"
+
+#- name: Load OS-specific vars
+#  include_vars: "{{ os_vars_file }}"
+
+
+
+- name: Install common tools based on the package manager
+  block:
+    - name: Install tools using APT (Debian/Ubuntu)
+      package:
+        name: "{{ item }}"
+        state: present
+      loop: "{{ common_tools.debian_packages }}"
+      when: ansible_facts.os_family == "Debian"
+      become: yes
+
+    - name: Install tools using YUM (CentOS/RedHat)
+      package:
+        name: "{{ item }}"
+        state: present
+      loop: "{{ common_tools.centos_packages }}"
+      when: ansible_facts.os_family == "RedHat"
+      become: yes
+
+    - name: Install tools using Brew (Mac)
+      homebrew:
+        name: "{{ item }}"
+        state: present
+      loop: "{{ common_tools.brew_packages }}"
+      when: ansible_facts.system == "Darwin"
+      become: no
+
+    - name: Install Python packages
+      pip:
+        name: "{{ item }}"
+        state: present
+      loop: "{{ common_tools.pip }}"
+      become: yes
+
+- name: Configure OS settings (e.g., Zsh, Bash, environment variables)
+  block:
+    - name: Install Zsh if needed
+      package:
+        name: zsh
+        state: present
+      when: os_settings.zsh
+
+    - name: Set up Zsh config
+      template:
+        src: .zshrc.j2
+        dest: "{{ ansible_env.HOME }}/.zshrc"
+      when: os_settings.zsh
+
+    - name: Install Bash if needed
+      package:
+        name: bash
+        state: present
+      when: os_settings.bash
+
+    - name: Set up Bash config
+      template:
+        src: .bashrc.j2
+        dest: "{{ ansible_env.HOME }}/.bashrc"
+      when: os_settings.bash
+
+    - name: Set environment variables
+      lineinfile:
+        path: "{{ ansible_env.HOME }}/.profile"
+        line: "export {{ item.name }}={{ item.value }}"
+        create: yes
+      loop: "{{ os_settings.environment_variables }}"
+
+    - name: Apply color schemes if enabled
+      block:
+        - name: Enable Zsh color scheme
+          lineinfile:
+            path: "{{ ansible_env.HOME }}/.zshrc"
+            line: "export ZSH_HIGHLIGHT_STYLES='fg=cyan,bold'"
+          when: os_settings.color_scheme
+
+        - name: Enable Bash color scheme
+          lineinfile:
+            path: "{{ ansible_env.HOME }}/.bashrc"
+            line: "export LS_COLORS='di=0;35'"
+          when: os_settings.color_scheme
+
+- name: Install VSCode extensions
+  block:
+    - name: Install VSCode extensions
+      command: code --install-extension {{ item }}
+      loop: "{{ common_tools.vscode_extensions }}"
+      when: common_tools.vscode_extensions | length > 0
+
+- name: Configure Sublime Text plugins
+  block:
+    - name: Install Sublime Text Package Control
+      git:
+        repo: https://github.com/wbond/package_control
+        dest: "{{ ansible_env.HOME }}/Library/Application Support/Sublime Text 3/Packages/Package Control"
+      when: common_tools.sublime_text_plugins | length > 0
+
+    - name: Install Sublime Text plugins
+      command: subl --command "install_package {{ item }}"
+      loop: "{{ common_tools.sublime_text_plugins }}"
+      when: common_tools.sublime_text_plugins | length > 0
+

@@ -1,0 +1,252 @@
+---
+- name: macOS - Check for Homebrew (Apple Silicon)
+  stat:
+    path: /opt/homebrew/bin/brew
+  register: homebrew_arm_check
+
+- name: macOS - Check for Homebrew (Intel)
+  stat:
+    path: /usr/local/bin/brew
+  register: homebrew_intel_check
+
+- name: macOS - Set Homebrew installed fact
+  set_fact:
+    homebrew_installed: "{{ homebrew_arm_check.stat.exists or homebrew_intel_check.stat.exists }}"
+
+- name: macOS - Install Homebrew
+  shell: |
+    NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+  when: not homebrew_installed
+  become: yes
+  environment:
+    CI: "1"
+
+- name: macOS - Add Homebrew to PATH (Apple Silicon)
+  lineinfile:
+    path: "{{ ansible_env.HOME }}/.zprofile"
+    line: 'eval "$(/opt/homebrew/bin/brew shellenv)"'
+    create: yes
+  when: homebrew_arm_check.stat.exists or (not homebrew_installed and ansible_machine == "arm64")
+
+- name: macOS - Add Homebrew to PATH (Intel)
+  lineinfile:
+    path: "{{ ansible_env.HOME }}/.zprofile"
+    line: 'eval "$(/usr/local/bin/brew shellenv)"'
+    create: yes
+  when: homebrew_intel_check.stat.exists and not homebrew_arm_check.stat.exists
+
+- name: macOS - Update Homebrew
+  homebrew:
+    update_homebrew: yes
+  ignore_errors: yes
+  when: homebrew_installed
+  become: no
+
+- name: macOS - Install Homebrew packages
+  homebrew:
+    name: "{{ item }}"
+    state: present
+  loop: "{{ common_tools.brew_packages }}"
+  when: common_tools.brew_packages is defined
+  become: no
+
+- name: macOS - Install Homebrew Cask applications
+  homebrew_cask:
+    name: "{{ item }}"
+    state: present
+  loop: "{{ common_tools.brew_cask_packages }}"
+  when: common_tools.brew_cask_packages is defined
+  ignore_errors: yes
+  become: no
+
+- name: macOS - Configure shell (zsh)
+  block:
+    - name: macOS - Get actual user for shell config
+      set_fact:
+        actual_user: "{{ lookup('env', 'USER') }}"
+      become: no
+
+    - name: macOS - Configure zshrc
+      template:
+        src: zshrc.j2
+        dest: "~{{ actual_user }}/.zshrc"
+        backup: yes
+        mode: '0644'
+      become: no
+
+- name: macOS - Set zsh as default shell
+  shell: chsh -s /bin/zsh
+  become: yes
+  when: ansible_env.SHELL != "/bin/zsh"
+  failed_when: false
+
+- name: macOS - Get the actual user (not root)
+  set_fact:
+    actual_user: "{{ lookup('env', 'USER') }}"
+  become: no
+
+- name: macOS - Deploy Ansible user configuration
+  template:
+    src: ansible.cfg.j2
+    dest: "~{{ actual_user }}/.ansible.cfg"
+    mode: '0644'
+    backup: yes
+  become: no
+
+- name: macOS - Create ansible directory
+  file:
+    path: "~{{ actual_user }}/ansible"
+    state: directory
+    mode: '0755'
+  become: no
+
+- name: macOS - Deploy Ansible development configuration
+  template:
+    src: ansible_dev.cfg.j2
+    dest: "~{{ actual_user }}/ansible/.ansible.cfg"
+    mode: '0644'
+    backup: yes
+  become: no
+
+- name: macOS - Configure git
+  block:
+    - name: macOS - Set git global config
+      git_config:
+        name: "{{ item.name }}"
+        value: "{{ item.value }}"
+        scope: global
+      loop:
+        - { name: "pull.rebase", value: "false" }
+        - { name: "init.defaultBranch", value: "main" }
+        - { name: "core.editor", value: "{{ preferred_editor }}" }
+
+- name: macOS - Install Docker Desktop
+  homebrew_cask:
+    name: docker
+    state: present
+  ignore_errors: yes
+  become: no
+
+- name: macOS - Configure iTerm2 as default SSH handler
+  block:
+    - name: macOS - Check if iTerm2 is installed
+      stat:
+        path: /Applications/iTerm.app
+      register: iterm2_check
+
+    - name: macOS - Set iTerm2 as default SSH handler
+      shell: |
+        /usr/bin/defaults write com.apple.LaunchServices/com.apple.launchservices.secure LSHandlers -array-add '{LSHandlerURLScheme=ssh;LSHandlerRoleAll=com.googlecode.iterm2;}'
+      when: iterm2_check.stat.exists
+      ignore_errors: yes
+      become: no
+
+    - name: macOS - Create iTerm2 DynamicProfiles directory
+      file:
+        path: "{{ ansible_env.HOME }}/Library/Application Support/iTerm2/DynamicProfiles"
+        state: directory
+        mode: '0755'
+      when: iterm2_check.stat.exists
+
+    - name: macOS - Deploy iTerm2 development profile
+      template:
+        src: iterm2_prefs.j2
+        dest: "{{ ansible_env.HOME }}/Library/Application Support/iTerm2/DynamicProfiles/ansible_profile.json"
+        mode: '0644'
+      when: iterm2_check.stat.exists
+
+    - name: macOS - Display iTerm2 configuration message
+      debug:
+        msg: "iTerm2 has been set as the default SSH:// URL handler and configured with a development profile. Restart iTerm2 to see changes."
+      when: iterm2_check.stat.exists
+
+- name: macOS - Manage custom hosts entries
+  block:
+    - name: macOS - Backup /etc/hosts
+      copy:
+        src: /etc/hosts
+        dest: /etc/hosts.backup
+        mode: '0644'
+        remote_src: yes
+      become: yes
+      when: manage_custom_hosts
+
+    - name: macOS - Add custom hosts entries
+      lineinfile:
+        path: /etc/hosts
+        line: "{{ item.ip }}\t{{ item.hostname }}\t# {{ item.comment | default('Managed by Ansible') }}"
+        regexp: "^{{ item.ip }}\\s+{{ item.hostname }}"
+        state: present
+        backup: yes
+      loop: "{{ custom_hosts_entries }}"
+      become: yes
+      when: manage_custom_hosts and custom_hosts_entries is defined
+
+    - name: macOS - Display hosts file info
+      debug:
+        msg: "Custom hosts entries have been added to /etc/hosts. Backup saved to /etc/hosts.backup"
+      when: manage_custom_hosts and custom_hosts_entries is defined
+
+- name: macOS - Configure Dock
+  block:
+    - name: macOS - Get actual user for Dock configuration
+      set_fact:
+        actual_user: "{{ lookup('env', 'USER') }}"
+      become: no
+
+    - name: macOS - Check if dockutil is available
+      command: which dockutil
+      register: dockutil_check
+      failed_when: false
+      changed_when: false
+      become: no
+
+    - name: macOS - Display Dock configuration status
+      debug:
+        msg: "{{ 'Configuring Dock for user ' + actual_user + ' with dockutil' if dockutil_check.rc == 0 else 'Skipping Dock configuration - dockutil not found (will be installed via Homebrew)' }}"
+      become: no
+
+    - name: macOS - Remove unwanted Dock items
+      shell: dockutil --remove '{{ item }}' --no-restart 2>/dev/null || true
+      loop: "{{ dockitems_remove }}"
+      when: 
+        - configure_dock
+        - dockutil_check.rc == 0
+        - dockitems_remove is defined
+      register: dock_remove_result
+      changed_when: "'was removed' in dock_remove_result.stdout or dock_remove_result.rc == 0"
+      become: no
+
+    - name: macOS - Check if applications exist before adding
+      stat:
+        path: "{{ item.path }}"
+      loop: "{{ dockitems_persist }}"
+      register: app_exists
+      when:
+        - configure_dock
+        - dockutil_check.rc == 0
+        - dockitems_persist is defined
+      become: no
+
+    - name: macOS - Add applications to Dock
+      shell: |
+        dockutil --find '{{ item.item.name }}' >/dev/null 2>&1 && dockutil --remove '{{ item.item.name }}' --no-restart
+        dockutil --add '{{ item.item.path }}' --position {{ item.item.pos }} --no-restart
+      loop: "{{ app_exists.results }}"
+      when:
+        - configure_dock
+        - dockutil_check.rc == 0
+        - item.stat.exists
+      register: dock_add_result
+      changed_when: true
+      become: no
+
+    - name: macOS - Restart Dock
+      command: killall Dock
+      when:
+        - configure_dock
+        - dockutil_check.rc == 0
+        - (dock_remove_result.changed or dock_add_result.changed)
+      changed_when: true
+      become: no
+

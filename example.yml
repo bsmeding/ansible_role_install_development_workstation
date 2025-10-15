@@ -1,0 +1,17 @@
+---
+# Example playbook for development/testing purposes
+# End users should create their own playbook after installing via:
+# ansible-galaxy role install bsmeding.install_development_workstation
+
+- name: Setup Development Workstation
+  hosts: localhost
+  connection: local
+  gather_facts: yes
+  
+  # Customize your settings here (optional)
+  # vars:
+  #   preferred_editor: "nano"
+  #   manage_custom_hosts: true
+  
+  roles:
+    - bsmeding.install_development_workstation

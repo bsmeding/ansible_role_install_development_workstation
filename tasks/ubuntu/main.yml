@@ -1,0 +1,173 @@
+---
+- name: Ubuntu - Update apt cache
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+  become: yes
+
+- name: Ubuntu - Install essential development packages
+  apt:
+    name: "{{ item }}"
+    state: present
+  loop: "{{ common_tools.debian_packages }}"
+  become: yes
+  when: common_tools.debian_packages is defined
+
+- name: Ubuntu - Add additional repositories
+  block:
+    - name: Ubuntu - Add Docker GPG key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+      become: yes
+      ignore_errors: yes
+
+    - name: Ubuntu - Add Docker repository
+      apt_repository:
+        repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+        state: present
+      become: yes
+      ignore_errors: yes
+
+    - name: Ubuntu - Add Node.js repository (NodeSource)
+      shell: curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+      become: yes
+      when: "'nodejs' in common_tools.debian_packages or 'node' in common_tools.debian_packages"
+      ignore_errors: yes
+
+- name: Ubuntu - Install Docker
+  apt:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-compose-plugin
+    state: present
+  become: yes
+  ignore_errors: yes
+
+- name: Ubuntu - Add user to docker group
+  user:
+    name: "{{ ansible_user_id }}"
+    groups: docker
+    append: yes
+  become: yes
+  ignore_errors: yes
+
+- name: Ubuntu - Install Node.js
+  apt:
+    name: nodejs
+    state: present
+  become: yes
+  ignore_errors: yes
+
+- name: Ubuntu - Configure shell (zsh)
+  block:
+    - name: Ubuntu - Get actual user for shell config
+      set_fact:
+        actual_user: "{{ lookup('env', 'USER') }}"
+      become: no
+
+    - name: Ubuntu - Configure zshrc
+      template:
+        src: zshrc.j2
+        dest: "~{{ actual_user }}/.zshrc"
+        backup: yes
+        mode: '0644'
+      become: no
+
+    - name: Ubuntu - Set zsh as default shell
+      user:
+        name: "{{ ansible_user_id }}"
+        shell: /usr/bin/zsh
+      become: yes
+      when: ansible_env.SHELL != "/usr/bin/zsh"
+
+- name: Ubuntu - Get the actual user (not root)
+  set_fact:
+    actual_user: "{{ lookup('env', 'USER') }}"
+  become: no
+
+- name: Ubuntu - Deploy Ansible user configuration
+  template:
+    src: ansible.cfg.j2
+    dest: "~{{ actual_user }}/.ansible.cfg"
+    mode: '0644'
+    backup: yes
+  become: no
+
+- name: Ubuntu - Create ansible directory
+  file:
+    path: "~{{ actual_user }}/ansible"
+    state: directory
+    mode: '0755'
+  become: no
+
+- name: Ubuntu - Deploy Ansible development configuration
+  template:
+    src: ansible_dev.cfg.j2
+    dest: "~{{ actual_user }}/ansible/.ansible.cfg"
+    mode: '0644'
+    backup: yes
+  become: no
+
+- name: Ubuntu - Configure git
+  block:
+    - name: Ubuntu - Set git global config
+      git_config:
+        name: "{{ item.name }}"
+        value: "{{ item.value }}"
+        scope: global
+      loop:
+        - { name: "pull.rebase", value: "false" }
+        - { name: "init.defaultBranch", value: "main" }
+        - { name: "core.editor", value: "{{ preferred_editor }}" }
+
+- name: Ubuntu - Install VSCode
+  block:
+    - name: Ubuntu - Add VSCode GPG key
+      apt_key:
+        url: https://packages.microsoft.com/keys/microsoft.asc
+        state: present
+      become: yes
+
+    - name: Ubuntu - Add VSCode repository
+      apt_repository:
+        repo: "deb [arch=amd64] https://packages.microsoft.com/repos/code stable main"
+        state: present
+      become: yes
+
+    - name: Ubuntu - Install VSCode
+      apt:
+        name: code
+        state: present
+      become: yes
+  ignore_errors: yes
+
+- name: Ubuntu - Manage custom hosts entries
+  block:
+    - name: Ubuntu - Backup /etc/hosts
+      copy:
+        src: /etc/hosts
+        dest: /etc/hosts.backup
+        mode: '0644'
+        remote_src: yes
+      become: yes
+      when: manage_custom_hosts
+
+    - name: Ubuntu - Add custom hosts entries
+      lineinfile:
+        path: /etc/hosts
+        line: "{{ item.ip }}\t{{ item.hostname }}\t# {{ item.comment | default('Managed by Ansible') }}"
+        regexp: "^{{ item.ip }}\\s+{{ item.hostname }}"
+        state: present
+        backup: yes
+      loop: "{{ custom_hosts_entries }}"
+      become: yes
+      when: manage_custom_hosts and custom_hosts_entries is defined
+
+    - name: Ubuntu - Display hosts file info
+      debug:
+        msg: "Custom hosts entries have been added to /etc/hosts. Backup saved to /etc/hosts.backup"
+      when: manage_custom_hosts and custom_hosts_entries is defined
+

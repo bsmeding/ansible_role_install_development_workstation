@@ -1,0 +1,44 @@
+---
+galaxy_info:
+  role_name: install_development_workstation
+  author: Bart Smeding
+  description: Set up a development workstation on macOS and Ubuntu with comprehensive development tools
+  company: 
+  
+  issue_tracker_url: https://github.com/bsmeding/ansible_role_install_development_workstation/issues
+  github_branch: main 
+  
+  license: MIT
+  
+  min_ansible_version: "2.9"
+  
+  platforms:
+    - name: MacOSX
+      versions:
+        - all
+    - name: Ubuntu
+      versions:
+        - focal
+        - jammy
+        - noble
+    - name: Debian
+      versions:
+        - all
+  
+  galaxy_tags:
+    - development
+    - workstation
+    - macos
+    - ubuntu
+    - docker
+    - python
+    - nodejs
+    - vscode
+    - cursor
+    - homebrew
+    - setup
+    - devops
+    - containers
+
+dependencies: []
+

@@ -1,0 +1,416 @@
+---
+# List of tools to install (Common defaults)
+common_tools:
+  # Python packages (cross-platform)
+  pip:
+    - ansible
+    - boto3
+    - requests
+    - pytest
+    - black
+    - flake8
+    - pylint
+    - virtualenv
+    - pipenv
+    - docker
+    
+  # VSCode extensions (cross-platform)
+  vscode_extensions:
+    - ms-python.python
+    - ms-python.vscode-pylance
+    - ms-python.black-formatter
+    - esbenp.prettier-vscode
+    - eamodio.gitlens
+    - vscodevim.vim
+    - ms-azuretools.vscode-docker
+    - ms-vscode-remote.vscode-remote-extensionpack
+    - srl-labs.vscode-containerlab
+    - golang.go
+    - redhat.vscode-yaml
+    - ms-kubernetes-tools.vscode-kubernetes-tools
+    - dbaeumer.vscode-eslint
+    - ms-vscode.makefile-tools
+    
+  # Git configuration
+  git_config:
+    - { name: "pull.rebase", value: "false" }
+    - { name: "init.defaultBranch", value: "main" }
+    - { name: "core.editor", value: "{{ preferred_editor }}" }
+
+  # Homebrew packages (macOS)
+  brew_packages:
+    # Version Control
+    - git
+    - git-lfs
+    
+    # Network tools
+    - curl
+    - wget
+    
+    # Programming Languages
+    - python@3.12
+    - node
+    - go
+    - ruby
+    
+    # Shell & Terminal
+    - zsh
+    - tmux
+    
+    # Editors
+    - vim
+    - nano
+    - neovim
+    - emacs
+    
+    # Build tools
+    - cmake
+    - make
+    
+    # Container & Orchestration
+    - docker
+    - docker-compose
+    - kubernetes-cli
+    
+    # Cloud & Infrastructure
+    - opentofu
+    - awscli
+    - azure-cli
+    
+    # Database clients
+    - postgresql
+    - mysql-client
+    
+    # Utilities
+    - jq
+    - yq
+    - tree
+    - htop
+    - watch
+    - fzf
+    - ripgrep
+    - bat
+    
+    # Mac specific
+    - dockutil
+    
+    # VPN
+    - tailscale
+  
+  # Homebrew Cask packages (macOS applications)
+  brew_cask_packages:
+    # Development
+    - visual-studio-code
+    - cursor
+    - iterm2
+    - ghostty
+    - postman
+    - docker
+    - github
+    
+    # Communication
+    - slack
+    
+    # Browsers
+    - google-chrome
+    - firefox
+
+  # Debian packages (Ubuntu)
+  debian_packages:
+    # Version Control
+    - git
+    - git-lfs
+    
+    # Network tools
+    - curl
+    - wget
+    
+    # Build essentials
+    - build-essential
+    - cmake
+    - make
+    - gcc
+    - g++
+    
+    # Programming Languages & Tools
+    - python3
+    - python3-pip
+    - python3-dev
+    - python3-venv
+    
+    # Shell & Terminal
+    - zsh
+    - tmux
+    
+    # Editors
+    - vim
+    - nano
+    - neovim
+    - emacs
+    
+    # Container tools
+    - docker-compose
+    # - containerlab
+    
+    # Cloud & Infrastructure tools
+    - apt-transport-https
+    - ca-certificates
+    - gnupg
+    - lsb-release
+    
+    # Database clients
+    - postgresql-client
+    - mysql-client
+    
+    # Utilities
+    - jq
+    - tree
+    - htop
+    - unzip
+    - zip
+    - software-properties-common
+    - net-tools
+    - dnsutils
+    - iputils-ping
+    - traceroute
+    - telnet
+    - nmap
+    - ncdu
+    - silversearcher-ag
+    - ripgrep
+    - bat
+    
+    # System libraries
+    - libssl-dev
+    - libffi-dev
+    - libxml2-dev
+    - libxslt1-dev
+    - zlib1g-dev
+    
+    # Terminal emulators (alternatives to iTerm2)
+    - terminator
+    - tilix
+
+# Custom hosts entries for /etc/hosts
+# Set to true to manage custom hosts entries
+manage_custom_hosts: true
+
+# Custom hosts entries
+custom_hosts_entries:
+  - { ip: "127.0.0.1", hostname: "local.dev", comment: "Local development" }
+  - { ip: "127.0.0.1", hostname: "app.local", comment: "Local app" }
+  # Add your custom entries:
+  # - { ip: "192.168.1.100", hostname: "dev.example.com", comment: "Development server" }
+
+# macOS Dock configuration
+configure_dock: true
+
+# Apps to remove from Dock
+dockitems_remove:
+  - Launchpad
+  - TV
+  - Music
+  - Podcasts
+  - News
+  - Maps
+  - Photos
+  - FaceTime
+  - Contacts
+  - Reminders
+
+# Apps to add to Dock (in order)
+dockitems_persist:
+
+  - name: "iTerm"
+    path: "/Applications/iTerm.app/"
+    pos: 1
+  - name: "Visual Studio Code"
+    path: "/Applications/Visual Studio Code.app/"
+    pos: 2
+  - name: "Cursor"
+    path: "/Applications/Cursor.app/"
+    pos: 3
+  - name: "GitHub Desktop"
+    path: "/Applications/GitHub Desktop.app/"
+    pos: 4
+  - name: "Slack"
+    path: "/Applications/Slack.app/"
+    pos: 5
+  - name: "Postman"
+    path: "/Applications/Postman.app/"
+    pos: 6
+  - name: "Google Chrome"
+    path: "/Applications/Google Chrome.app/"
+    pos: 7
+  - name: "Firefox"
+    path: "/Applications/Firefox.app/"
+    pos: 8
+  - name: "Docker Desktop"
+    path: "/Applications/Docker Desktop.app/"
+    pos: 9
+
+# Preferred text editor
+# Options: vim, nano, nvim, emacs, code, cursor
+preferred_editor: "nano"
+
+# OS-specific settings
+os_settings:
+  zsh: true
+  bash: true
+  environment_variables:
+    - { name: "EDITOR", value: "{{ preferred_editor }}" }
+    - { name: "VISUAL", value: "{{ preferred_editor }}" }
+    - { name: "LANG", value: "en_US.UTF-8" }
+  color_scheme: true
+
+# Homebrew packages (macOS)
+  brew_packages:
+    # Version Control
+    - git
+    - git-lfs
+    
+    # Network tools
+    - curl
+    - wget
+    
+    # Programming Languages
+    - python@3.12
+    - node
+    - go
+    - ruby
+    
+    # Shell & Terminal
+    - zsh
+    - tmux
+    
+    # Editors
+    - vim
+    - nano
+    - neovim
+    - emacs
+    
+    # Build tools
+    - cmake
+    - make
+    
+    # Container & Orchestration
+    - docker
+    - docker-compose
+    - kubernetes-cli
+    - containerlab
+    
+    # Cloud & Infrastructure
+    - opentofu
+    - awscli
+    - azure-cli
+    
+    # Database clients
+    # - postgresql
+    - mysql-client
+    
+    # Utilities
+    - jq
+    - yq
+    - tree
+    - htop
+    - watch
+    - fzf
+    - ripgrep
+    - bat
+    
+    # Mac specific
+    - dockutil
+    
+  brew_cask_packages:
+    # Development
+    - visual-studio-code
+    - cursor
+    - iterm2
+    - ghostty
+    - postman
+    - docker
+    - github
+    
+    # Communication
+    - slack
+    
+    # Browsers
+    - google-chrome
+    - firefox
+
+    
+  # Debian packages (Ubuntu)
+  debian_packages:
+    # Version Control
+    - git
+    - git-lfs
+    
+    # Network tools
+    - curl
+    - wget
+    
+    # Build essentials
+    - build-essential
+    - cmake
+    - make
+    - gcc
+    - g++
+    
+    # Programming Languages & Tools
+    - python3
+    - python3-pip
+    - python3-dev
+    - python3-venv
+    
+    # Shell & Terminal
+    - zsh
+    - tmux
+    
+    # Editors
+    - vim
+    - nano
+    - neovim
+    - emacs
+    
+    # Container tools
+    - docker-compose
+    - containerlab
+    
+    # Cloud & Infrastructure tools
+    - apt-transport-https
+    - ca-certificates
+    - gnupg
+    - lsb-release
+    
+    # Database clients
+    - postgresql-client
+    - mysql-client
+    
+    # Utilities
+    - jq
+    - tree
+    - htop
+    - unzip
+    - zip
+    - software-properties-common
+    - net-tools
+    - dnsutils
+    - iputils-ping
+    - traceroute
+    - telnet
+    - nmap
+    - ncdu
+    - silversearcher-ag
+    - ripgrep
+    - bat
+    
+    # System libraries
+    - libssl-dev
+    - libffi-dev
+    - libxml2-dev
+    - libxslt1-dev
+    - zlib1g-dev
+    
+    # Terminal emulators (alternatives to iTerm2)
+    - terminator
+    - tilix
