@@ -127,6 +127,30 @@
   ignore_errors: yes
   become: no
 
+- name: macOS - Configure Ghostty
+  block:
+    - name: macOS - Check if Ghostty is installed
+      stat:
+        path: /Applications/Ghostty.app
+      register: ghostty_check
+
+    - name: macOS - Create Ghostty config directory
+      file:
+        path: "~{{ actual_user }}/.config/ghostty"
+        state: directory
+        mode: '0755'
+      when: ghostty_check.stat.exists
+      become: no
+
+    - name: macOS - Deploy Ghostty configuration
+      template:
+        src: ghostty.conf.j2
+        dest: "~{{ actual_user }}/.config/ghostty/config"
+        mode: '0644'
+        backup: yes
+      when: ghostty_check.stat.exists
+      become: no
+
 - name: macOS - Configure iTerm2 as default SSH handler
   block:
     - name: macOS - Check if iTerm2 is installed

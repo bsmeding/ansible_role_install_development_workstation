@@ -26,9 +26,12 @@ Inspired by [Jeff Geerling's mac-dev-playbook](https://github.com/geerlingguy/ma
 - **Applications**: Postman, GitHub Desktop, Slack, Chrome, Firefox
 - **Dock Management**: Automatically configure macOS Dock with your preferred apps
 
+> **Note:** Some apps (OneDrive, TeamViewer) require manual installation due to system-level permissions. These are commented out in defaults but can be installed afterward with `brew install --cask <app>`.
+
 ### Ubuntu
 - **Languages**: Python 3, Node.js 20.x
 - **Containers**: Docker CE, Docker Compose, Containerlab
+- **Cloud Storage**: rclone (supports OneDrive, Google Drive, Dropbox, S3, and 40+ providers)
 - **Databases**: PostgreSQL, MySQL clients
 - **Build Tools**: gcc, g++, make, cmake, build-essential
 - **Editors**: VSCode (with extensions), Vim, Nano, Neovim, Emacs
@@ -216,11 +219,17 @@ This will configure:
   - Pre-configured development profile included
   - Split panes, search, autocomplete
 - **Ghostty**: Modern, GPU-accelerated terminal
+  - Pre-configured with sensible defaults
+  - Config file deployed to `~/.config/ghostty/config`
+  - Shell integration, clipboard support, keybindings
 
 **Ubuntu:**
 - **Terminator**: Feature-rich terminal with split panes
 - **Tilix**: Tiling terminal emulator
 - **GNOME Terminal**: Default terminal (pre-installed)
+- **Ghostty**: (If installed manually) Config will be deployed automatically
+
+> **Note for Ubuntu:** Ghostty is not in standard Ubuntu repositories. If you install it manually, the role will automatically deploy the configuration file.
 
 ### Editor Extensions (VSCode & Cursor)
 

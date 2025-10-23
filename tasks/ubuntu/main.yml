@@ -61,6 +61,37 @@
   become: yes
   ignore_errors: yes
 
+- name: Ubuntu - Configure Ghostty
+  block:
+    - name: Ubuntu - Get actual user for Ghostty config
+      set_fact:
+        actual_user: "{{ lookup('env', 'USER') }}"
+      become: no
+
+    - name: Ubuntu - Check if Ghostty is installed
+      command: which ghostty
+      register: ghostty_check
+      failed_when: false
+      changed_when: false
+      become: no
+
+    - name: Ubuntu - Create Ghostty config directory
+      file:
+        path: "~{{ actual_user }}/.config/ghostty"
+        state: directory
+        mode: '0755'
+      when: ghostty_check.rc == 0
+      become: no
+
+    - name: Ubuntu - Deploy Ghostty configuration
+      template:
+        src: ghostty.conf.j2
+        dest: "~{{ actual_user }}/.config/ghostty/config"
+        mode: '0644'
+        backup: yes
+      when: ghostty_check.rc == 0
+      become: no
+
 - name: Ubuntu - Configure shell (zsh)
   block:
     - name: Ubuntu - Get actual user for shell config

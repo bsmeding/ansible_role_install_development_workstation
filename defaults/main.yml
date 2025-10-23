@@ -94,6 +94,9 @@ common_tools:
     # Mac specific
     - dockutil
     
+    # Cloud Storage
+    - rclone
+    
     # VPN
     - tailscale
   
@@ -108,12 +111,27 @@ common_tools:
     - docker
     - github
     
+    # Password Managers
+    - 1password
+    - 1password-cli
+
+    # VPN
+    # - tailscale
+
     # Communication
     - slack
+    - WhatsApp
+    
+    # Cloud Storage
+    # - onedrive  # Requires manual installation: brew install --cask onedrive
     
     # Browsers
     - google-chrome
     - firefox
+    - brave-browser
+
+    # Support
+    # - teamviewer # Requires manual installation: brew install --cask teamviewer
 
   # Debian packages (Ubuntu)
   debian_packages:
@@ -157,6 +175,9 @@ common_tools:
     - ca-certificates
     - gnupg
     - lsb-release
+    
+    # Cloud Storage
+    - rclone
     
     # Database clients
     - postgresql-client
@@ -219,35 +240,72 @@ dockitems_remove:
   - Reminders
 
 # Apps to add to Dock (in order)
+# Note: Finder is always position 1 by default (macOS system app)
+# Positions start after Finder
 dockitems_persist:
-
-  - name: "iTerm"
-    path: "/Applications/iTerm.app/"
-    pos: 1
-  - name: "Visual Studio Code"
-    path: "/Applications/Visual Studio Code.app/"
-    pos: 2
-  - name: "Cursor"
-    path: "/Applications/Cursor.app/"
-    pos: 3
-  - name: "GitHub Desktop"
-    path: "/Applications/GitHub Desktop.app/"
-    pos: 4
-  - name: "Slack"
-    path: "/Applications/Slack.app/"
-    pos: 5
-  - name: "Postman"
-    path: "/Applications/Postman.app/"
-    pos: 6
-  - name: "Google Chrome"
-    path: "/Applications/Google Chrome.app/"
-    pos: 7
   - name: "Firefox"
     path: "/Applications/Firefox.app/"
+    pos: 1
+  - name: "Google Chrome"
+    path: "/Applications/Google Chrome.app/"
+    pos: 2
+  - name: "Prisma Access Browser"
+    path: "/Applications/Prisma Access Browser.app/"
+    pos: 3
+  - name: "Safari"
+    path: "/Applications/Safari.app/"
+    pos: 4
+  - name: "Ghostty"
+    path: "/Applications/Ghostty.app/"
+    pos: 5
+  - name: "iTerm"
+    path: "/Applications/iTerm.app/"
+    pos: 6
+  - name: "Terminal"
+    path: "/System/Applications/Utilities/Terminal.app/"
+    pos: 7
+  - name: "GitHub Desktop"
+    path: "/Applications/GitHub Desktop.app/"
     pos: 8
-  - name: "Docker Desktop"
-    path: "/Applications/Docker Desktop.app/"
+  - name: "Visual Studio Code"
+    path: "/Applications/Visual Studio Code.app/"
     pos: 9
+  - name: "Cursor"
+    path: "/Applications/Cursor.app/"
+    pos: 10
+  - name: "Sublime Text"
+    path: "/Applications/Sublime Text.app/"
+    pos: 11
+  - name: "1Password"
+    path: "/Applications/1Password.app/"
+    pos: 12
+  - name: "Postman"
+    path: "/Applications/Postman.app/"
+    pos: 13
+  - name: "Mail"
+    path: "/System/Applications/Mail.app/"
+    pos: 14
+  - name: "Apps"
+    path: "/System/Applications/Apps.app/"
+    pos: 15
+  - name: "VMware Fusion"
+    path: "/Applications/VMware Fusion.app/"
+    pos: 16
+  - name: "Docker Desktop"
+    path: "/Applications/Docker.app/Contents/MacOS/Docker Desktop.app/"
+    pos: 17
+  - name: "Keynote"
+    path: "/Applications/Keynote.app/"
+    pos: 18
+  - name: "Signal"
+    path: "/Applications/Signal.app/"
+    pos: 19
+  - name: "Slack"
+    path: "/Applications/Slack.app/"
+    pos: 20
+  - name: "Calendar"
+    path: "/System/Applications/Calendar.app/"
+    pos: 21
 
 # Preferred text editor
 # Options: vim, nano, nvim, emacs, code, cursor
