@@ -15,7 +15,7 @@
 
     - name: Check zshrc was deployed
       ansible.builtin.stat:
-        path: "{{ ansible_env.HOME }}/.zshrc"
+        path: "{{ ansible_user_dir }}/.zshrc"
       register: zshrc
 
     - name: Assert zshrc exists

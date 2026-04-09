@@ -63,11 +63,6 @@
 
 - name: Ubuntu - Configure Ghostty
   block:
-    - name: Ubuntu - Get actual user for Ghostty config
-      set_fact:
-        actual_user: "{{ lookup('env', 'USER') }}"
-      become: no
-
     - name: Ubuntu - Check if Ghostty is installed
       command: which ghostty
       register: ghostty_check
@@ -77,7 +72,7 @@
 
     - name: Ubuntu - Create Ghostty config directory
       file:
-        path: "~{{ actual_user }}/.config/ghostty"
+        path: "{{ ansible_user_dir }}/.config/ghostty"
         state: directory
         mode: '0755'
       when: ghostty_check.rc == 0
@@ -86,7 +81,7 @@
     - name: Ubuntu - Deploy Ghostty configuration
       template:
         src: ghostty.conf.j2
-        dest: "~{{ actual_user }}/.config/ghostty/config"
+        dest: "{{ ansible_user_dir }}/.config/ghostty/config"
         mode: '0644'
         backup: yes
       when: ghostty_check.rc == 0
@@ -94,16 +89,11 @@
 
 - name: Ubuntu - Configure shell (zsh)
   block:
-    - name: Ubuntu - Get actual user for shell config
-      set_fact:
-        actual_user: "{{ lookup('env', 'USER') }}"
-      become: no
-
     - name: Ubuntu - Install and configure Oh My Zsh
       block:
         - name: Ubuntu - Check if Oh My Zsh is already installed
           stat:
-            path: "{{ ansible_env.HOME }}/.oh-my-zsh"
+            path: "{{ ansible_user_dir }}/.oh-my-zsh"
           register: ohmyzsh_check
           become: no
 
@@ -111,11 +101,11 @@
           shell: |
             sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
           args:
-            creates: "{{ ansible_env.HOME }}/.oh-my-zsh"
+            creates: "{{ ansible_user_dir }}/.oh-my-zsh"
           when: not ohmyzsh_check.stat.exists
           become: no
           environment:
-            HOME: "{{ ansible_env.HOME }}"
+            HOME: "{{ ansible_user_dir }}"
 
         - name: Ubuntu - Install custom Oh My Zsh plugins
           include_tasks: install_ohmyzsh_plugin.yml
@@ -128,7 +118,7 @@
     - name: Ubuntu - Configure zshrc
       template:
         src: zshrc.j2
-        dest: "~{{ actual_user }}/.zshrc"
+        dest: "{{ ansible_user_dir }}/.zshrc"
         backup: yes
         mode: '0644'
       become: no
@@ -138,24 +128,19 @@
         name: "{{ ansible_user_id }}"
         shell: /usr/bin/zsh
       become: yes
-      when: ansible_env.SHELL != "/usr/bin/zsh"
-
-- name: Ubuntu - Get the actual user (not root)
-  set_fact:
-    actual_user: "{{ lookup('env', 'USER') }}"
-  become: no
+      when: ansible_facts['env']['SHELL'] | default('') != "/usr/bin/zsh"
 
 - name: Ubuntu - Deploy Ansible user configuration
   template:
     src: ansible.cfg.j2
-    dest: "~{{ actual_user }}/.ansible.cfg"
+    dest: "{{ ansible_user_dir }}/.ansible.cfg"
     mode: '0644'
     backup: yes
   become: no
 
 - name: Ubuntu - Create ansible directory
   file:
-    path: "~{{ actual_user }}/ansible"
+    path: "{{ ansible_user_dir }}/ansible"
     state: directory
     mode: '0755'
   become: no
@@ -163,7 +148,7 @@
 - name: Ubuntu - Deploy Ansible development configuration
   template:
     src: ansible_dev.cfg.j2
-    dest: "~{{ actual_user }}/ansible/.ansible.cfg"
+    dest: "{{ ansible_user_dir }}/ansible/.ansible.cfg"
     mode: '0644'
     backup: yes
   become: no
