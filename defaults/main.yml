@@ -1,5 +1,6 @@
 ---
 # List of tools to install (Common defaults)
+
 common_tools:
   # Python packages (cross-platform)
   pip:
@@ -58,14 +59,15 @@ common_tools:
     - tmux
     
     # Editors
-    - vim
+    # - vim
     - nano
-    - neovim
+    # - neovim
     - emacs
     
     # Build tools
     - cmake
     - make
+    - task
     
     # Container & Orchestration
     - docker
@@ -78,7 +80,7 @@ common_tools:
     - azure-cli
     
     # Database clients
-    - postgresql
+    - libpq         #postgresql  
     - mysql-client
     
     # Utilities
@@ -102,6 +104,12 @@ common_tools:
 
     # LLM
     - ollama
+
+    # Kubernetes
+    - kubectl
+    - minikube
+    - kubectx
+    - argocd
   
   # Homebrew Cask packages (macOS applications)
   brew_cask_packages:
@@ -135,6 +143,10 @@ common_tools:
 
     # Support
     # - teamviewer # Requires manual installation: brew install --cask teamviewer
+
+    # AI
+    - claude-code
+
 
   # Debian packages (Ubuntu)
   debian_packages:
@@ -323,3 +335,35 @@ os_settings:
     - { name: "VISUAL", value: "{{ preferred_editor }}" }
     - { name: "LANG", value: "en_US.UTF-8" }
   color_scheme: true
+
+# Oh My Zsh configuration
+install_ohmyzsh: true
+
+# Oh My Zsh theme (see https://github.com/ohmyzsh/ohmyzsh/wiki/Themes)
+ohmyzsh_theme: "robbyrussell"
+
+# Oh My Zsh plugins
+# Built-in plugins (already included in Oh My Zsh):
+#   - git, docker, kubectl, python, node, npm, yarn, etc.
+# Custom plugins (installed from GitHub):
+#   - zsh-autosuggestions: https://github.com/zsh-users/zsh-autosuggestions
+#   - zsh-syntax-highlighting: https://github.com/zsh-users/zsh-syntax-highlighting
+#   - zsh-completions: https://github.com/zsh-users/zsh-completions
+#   - zsh-history-substring-search: https://github.com/zsh-users/zsh-history-substring-search
+ohmyzsh_plugins:
+  # Built-in plugins
+  - git
+  # Custom plugins (will be installed from GitHub)
+  - zsh-autosuggestions
+  - zsh-syntax-highlighting
+  - ansible
+  
+
+# Custom Oh My Zsh plugins to install from GitHub
+# Format: { name: "plugin-name", repo: "https://github.com/user/repo.git" }
+# These will be cloned to ~/.oh-my-zsh/custom/plugins/{name}
+ohmyzsh_custom_plugins:
+  - name: zsh-autosuggestions
+    repo: https://github.com/zsh-users/zsh-autosuggestions.git
+  - name: zsh-syntax-highlighting
+    repo: https://github.com/zsh-users/zsh-syntax-highlighting.git

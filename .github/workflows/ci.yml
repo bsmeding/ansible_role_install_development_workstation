@@ -1,0 +1,54 @@
+---
+name: CI
+'on':
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+      - main
+      - master
+  schedule:
+    - cron: "0 7 * * 0"
+
+defaults:
+  run:
+    working-directory: 'bsmeding.install_development_workstation'
+
+jobs:
+  molecule:
+    name: Molecule
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        distro:
+          - ubuntu2204
+          - ubuntu2404
+    steps:
+      - name: Check out the codebase.
+        uses: actions/checkout@v6
+        with:
+          path: 'bsmeding.install_development_workstation'
+
+      - name: Set up Python 3.
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+
+      - name: Install test dependencies.
+        run: pip3 install ansible-core molecule molecule-plugins[docker] docker
+
+      - name: Pull CICD image
+        run: docker pull bsmeding/ansible_cicd_${{ matrix.distro }}:latest
+
+      - name: Prep Molecule tmp dir
+        run: |
+          mkdir -p .molecule/ansible-tmp
+          chmod 777 .molecule/ansible-tmp
+
+      - name: Run Molecule tests
+        run: molecule test
+        env:
+          PY_COLORS: '1'
+          ANSIBLE_FORCE_COLOR: '1'
+          MOLECULE_DISTRO: ${{ matrix.distro }}
+          MOLECULE_DOCKER_COMMAND: '/sbin/init'

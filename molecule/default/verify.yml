@@ -1,0 +1,24 @@
+---
+- name: Verify
+  hosts: all
+  tasks:
+    - name: Check git is installed
+      ansible.builtin.command: git --version
+      register: git_version
+      changed_when: false
+
+    - name: Assert git is available
+      ansible.builtin.assert:
+        that:
+          - git_version.rc == 0
+          - "'git version' in git_version.stdout"
+
+    - name: Check zshrc was deployed
+      ansible.builtin.stat:
+        path: "{{ ansible_env.HOME }}/.zshrc"
+      register: zshrc
+
+    - name: Assert zshrc exists
+      ansible.builtin.assert:
+        that:
+          - zshrc.stat.exists

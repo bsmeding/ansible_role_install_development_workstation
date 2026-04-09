@@ -25,14 +25,46 @@
   changed_when: "'Successfully installed' in pip_install_result.stdout"
   failed_when: false
 
+- name: Get installed VSCode extensions
+  command: code --list-extensions
+  register: vscode_installed_extensions
+  changed_when: false
+  failed_when: false
+  when: common_tools.vscode_extensions is defined and common_tools.vscode_extensions | length > 0
+
 - name: Install VSCode extensions (Common)
   command: code --install-extension {{ item }}
   loop: "{{ common_tools.vscode_extensions }}"
-  when: common_tools.vscode_extensions is defined and common_tools.vscode_extensions | length > 0
+  when:
+    - common_tools.vscode_extensions is defined and common_tools.vscode_extensions | length > 0
+    - vscode_installed_extensions.rc | default(1) == 0
+    - item not in (vscode_installed_extensions.stdout_lines | default([]))
+  register: vscode_install_result
+  changed_when: 
+    - vscode_install_result.rc | default(1) == 0
+    - "'already installed' not in (vscode_install_result.stderr | default(''))"
+    - "'already installed' not in (vscode_install_result.stdout | default(''))"
+    - "'Installing' in (vscode_install_result.stdout | default('')) or 'installed' in (vscode_install_result.stdout | default(''))"
   failed_when: false
+
+- name: Get installed Cursor extensions
+  command: cursor --list-extensions
+  register: cursor_installed_extensions
+  changed_when: false
+  failed_when: false
+  when: common_tools.vscode_extensions is defined and common_tools.vscode_extensions | length > 0
 
 - name: Install Cursor extensions (Common)
   command: cursor --install-extension {{ item }}
   loop: "{{ common_tools.vscode_extensions }}"
-  when: common_tools.vscode_extensions is defined and common_tools.vscode_extensions | length > 0
+  when:
+    - common_tools.vscode_extensions is defined and common_tools.vscode_extensions | length > 0
+    - cursor_installed_extensions.rc | default(1) == 0
+    - item not in (cursor_installed_extensions.stdout_lines | default([]))
+  register: cursor_install_result
+  changed_when:
+    - cursor_install_result.rc | default(1) == 0
+    - "'already installed' not in (cursor_install_result.stderr | default(''))"
+    - "'already installed' not in (cursor_install_result.stdout | default(''))"
+    - "'Installing' in (cursor_install_result.stdout | default('')) or 'installed' in (cursor_install_result.stdout | default(''))"
   failed_when: false

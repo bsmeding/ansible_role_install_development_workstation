@@ -66,6 +66,32 @@
         actual_user: "{{ lookup('env', 'USER') }}"
       become: no
 
+    - name: macOS - Install and configure Oh My Zsh
+      block:
+        - name: macOS - Check if Oh My Zsh is already installed
+          stat:
+            path: "{{ ansible_env.HOME }}/.oh-my-zsh"
+          register: ohmyzsh_check
+          become: no
+
+        - name: macOS - Install Oh My Zsh
+          shell: |
+            sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+          args:
+            creates: "{{ ansible_env.HOME }}/.oh-my-zsh"
+          when: not ohmyzsh_check.stat.exists
+          become: no
+          environment:
+            HOME: "{{ ansible_env.HOME }}"
+
+        - name: macOS - Install custom Oh My Zsh plugins
+          include_tasks: install_ohmyzsh_plugin.yml
+          loop: "{{ ohmyzsh_custom_plugins }}"
+          when: 
+            - ohmyzsh_custom_plugins is defined
+            - ohmyzsh_custom_plugins | length > 0
+      when: install_ohmyzsh
+
     - name: macOS - Configure zshrc
       template:
         src: zshrc.j2
@@ -230,15 +256,29 @@
         msg: "{{ 'Configuring Dock for user ' + actual_user + ' with dockutil' if dockutil_check.rc == 0 else 'Skipping Dock configuration - dockutil not found (will be installed via Homebrew)' }}"
       become: no
 
-    - name: macOS - Remove unwanted Dock items
-      shell: dockutil --remove '{{ item }}' --no-restart 2>/dev/null || true
+    - name: macOS - Check if Dock items exist before removing
+      command: dockutil --find '{{ item }}'
       loop: "{{ dockitems_remove }}"
       when: 
         - configure_dock
         - dockutil_check.rc == 0
         - dockitems_remove is defined
+      register: dock_items_to_remove
+      changed_when: false
+      failed_when: false
+      become: no
+
+    - name: macOS - Remove unwanted Dock items
+      shell: dockutil --remove '{{ item.item }}' --no-restart
+      loop: "{{ dock_items_to_remove.results }}"
+      when: 
+        - configure_dock
+        - dockutil_check.rc == 0
+        - dockitems_remove is defined
+        - item.rc == 0
       register: dock_remove_result
-      changed_when: "'was removed' in dock_remove_result.stdout or dock_remove_result.rc == 0"
+      changed_when: "'was removed' in dock_remove_result.stdout"
+      failed_when: false
       become: no
 
     - name: macOS - Check if applications exist before adding
@@ -252,17 +292,43 @@
         - dockitems_persist is defined
       become: no
 
-    - name: macOS - Add applications to Dock
-      shell: |
-        dockutil --find '{{ item.item.name }}' >/dev/null 2>&1 && dockutil --remove '{{ item.item.name }}' --no-restart
-        dockutil --add '{{ item.item.path }}' --position {{ item.item.pos }} --no-restart
+    - name: macOS - Check if applications are already in Dock
+      command: dockutil --find '{{ item.item.name }}'
       loop: "{{ app_exists.results }}"
       when:
         - configure_dock
         - dockutil_check.rc == 0
         - item.stat.exists
+      register: dock_app_check
+      changed_when: false
+      failed_when: false
+      become: no
+
+    - name: macOS - Create list of apps already in Dock
+      set_fact:
+        apps_in_dock: "{{ apps_in_dock | default([]) + [item.item.name] }}"
+      loop: "{{ dock_app_check.results | default([]) }}"
+      when:
+        - configure_dock
+        - dockutil_check.rc == 0
+        - item.rc == 0
+      become: no
+
+    - name: macOS - Add applications to Dock
+      shell: dockutil --add '{{ item.item.path }}' --position {{ item.item.pos }} --no-restart
+      loop: "{{ app_exists.results }}"
+      when:
+        - configure_dock
+        - dockutil_check.rc == 0
+        - item.stat.exists
+        - item.item.name not in (apps_in_dock | default([]))
       register: dock_add_result
-      changed_when: true
+      changed_when: 
+        - dock_add_result.rc == 0
+        - "'already in' not in (dock_add_result.stderr | default(''))"
+        - "'already in' not in (dock_add_result.stdout | default(''))"
+        - "'added' in (dock_add_result.stdout | default(''))"
+      failed_when: false
       become: no
 
     - name: macOS - Restart Dock
@@ -270,7 +336,7 @@
       when:
         - configure_dock
         - dockutil_check.rc == 0
-        - (dock_remove_result.changed or dock_add_result.changed)
+        - (dock_remove_result.results | default([]) | selectattr('changed', 'equalto', true) | list | length > 0) or (dock_add_result.results | default([]) | selectattr('changed', 'equalto', true) | list | length > 0)
       changed_when: true
       become: no
 

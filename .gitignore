@@ -1,6 +1,7 @@
 # Ansible
 *.retry
 .ansible/
+.molecule/
 
 # IDE
 .vscode/

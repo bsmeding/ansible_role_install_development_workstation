@@ -1,7 +1,7 @@
 ---
 galaxy_info:
   role_name: install_development_workstation
-  author: Bart Smeding
+  author: bsmeding
   description: Set up a development workstation on macOS and Ubuntu with comprehensive development tools
   company: 
   
