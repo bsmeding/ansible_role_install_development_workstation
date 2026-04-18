@@ -1,6 +1,7 @@
 ---
 - name: Verify
   hosts: all
+  gather_facts: true
   tasks:
     - name: Check git is installed
       ansible.builtin.command: git --version
@@ -22,3 +23,7 @@
       ansible.builtin.assert:
         that:
           - zshrc.stat.exists
+        fail_msg: >-
+          Expected {{ ansible_facts['user_dir'] }}/.zshrc from role converge;
+          user_dir={{ ansible_facts['user_dir'] | default('MISSING') }},
+          user_id={{ ansible_facts['user_id'] | default('MISSING') }}.

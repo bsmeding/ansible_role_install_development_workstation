@@ -87,48 +87,46 @@
       when: ghostty_check.rc == 0
       become: no
 
-- name: Ubuntu - Configure shell (zsh)
+- name: Ubuntu - Install and configure Oh My Zsh
   block:
-    - name: Ubuntu - Install and configure Oh My Zsh
-      block:
-        - name: Ubuntu - Check if Oh My Zsh is already installed
-          stat:
-            path: "{{ ansible_facts['user_dir'] }}/.oh-my-zsh"
-          register: ohmyzsh_check
-          become: no
-
-        - name: Ubuntu - Install Oh My Zsh
-          shell: |
-            sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
-          args:
-            creates: "{{ ansible_facts['user_dir'] }}/.oh-my-zsh"
-          when: not ohmyzsh_check.stat.exists
-          become: no
-          environment:
-            HOME: "{{ ansible_facts['user_dir'] }}"
-
-        - name: Ubuntu - Install custom Oh My Zsh plugins
-          include_tasks: install_ohmyzsh_plugin.yml
-          loop: "{{ ohmyzsh_custom_plugins }}"
-          when: 
-            - ohmyzsh_custom_plugins is defined
-            - ohmyzsh_custom_plugins | length > 0
-      when: install_ohmyzsh
-
-    - name: Ubuntu - Configure zshrc
-      template:
-        src: zshrc.j2
-        dest: "{{ ansible_facts['user_dir'] }}/.zshrc"
-        backup: yes
-        mode: '0644'
+    - name: Ubuntu - Check if Oh My Zsh is already installed
+      stat:
+        path: "{{ ansible_facts['user_dir'] }}/.oh-my-zsh"
+      register: ohmyzsh_check
       become: no
 
-    - name: Ubuntu - Set zsh as default shell
-      user:
-        name: "{{ ansible_facts['user_id'] }}"
-        shell: /usr/bin/zsh
-      become: yes
-      when: ansible_facts['user_shell'] | default('') != "/usr/bin/zsh"
+    - name: Ubuntu - Install Oh My Zsh
+      shell: |
+        sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+      args:
+        creates: "{{ ansible_facts['user_dir'] }}/.oh-my-zsh"
+      when: not ohmyzsh_check.stat.exists
+      become: no
+      environment:
+        HOME: "{{ ansible_facts['user_dir'] }}"
+
+    - name: Ubuntu - Install custom Oh My Zsh plugins
+      include_tasks: install_ohmyzsh_plugin.yml
+      loop: "{{ ohmyzsh_custom_plugins }}"
+      when:
+        - ohmyzsh_custom_plugins is defined
+        - ohmyzsh_custom_plugins | length > 0
+  when: install_ohmyzsh
+
+- name: Ubuntu - Configure zshrc
+  ansible.builtin.template:
+    src: zshrc.j2
+    dest: "{{ ansible_facts['user_dir'] }}/.zshrc"
+    backup: true
+    mode: "0644"
+  become: false
+
+- name: Ubuntu - Set zsh as default shell
+  ansible.builtin.user:
+    name: "{{ ansible_facts['user_id'] }}"
+    shell: /usr/bin/zsh
+  become: true
+  when: ansible_facts['user_shell'] | default('') != "/usr/bin/zsh"
 
 - name: Ubuntu - Deploy Ansible user configuration
   template:
