@@ -16,7 +16,9 @@ fact_caching_connection = ~/.ansible/facts
 fact_caching_timeout = 86400
 
 # Output Configuration
-stdout_callback = yaml
+# community.general's yaml callback was removed in collection v12; use default + result_format
+stdout_callback = default
+result_format = yaml
 bin_ansible_callbacks = True
 display_skipped_hosts = False
 display_ok_hosts = True

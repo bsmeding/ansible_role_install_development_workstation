@@ -82,6 +82,8 @@ ansible-galaxy role install git+https://github.com/bsmeding/ansible_role_install
 
 ### Create Your Playbook
 
+The role only ships **minimal empty defaults** (no packages, dock, or Oh My Zsh until you set variables). Keep your real lists in a vars file next to your playbook so you do not fork the role to change packages.
+
 Create a playbook file (e.g., `setup.yml`):
 
 ```yaml
@@ -90,17 +92,17 @@ Create a playbook file (e.g., `setup.yml`):
   hosts: localhost
   connection: local
   gather_facts: yes
-  
-  vars:
-    # Customize your settings here
-    preferred_editor: "nano"
-    manage_custom_hosts: true
-    custom_hosts_entries:
-      - { ip: "127.0.0.1", hostname: "local.dev", comment: "Local dev" }
-  
+
+  vars_files:
+    - vars/workstation.yml
+
   roles:
     - bsmeding.install_development_workstation
 ```
+
+Create `vars/workstation.yml` with `common_tools`, `dockitems_persist`, `preferred_editor`, and any other variables you need (see **Role Variables** below for the full list).
+
+For small overrides only, you can still use play `vars:` instead of `vars_files`.
 
 ### Run the Playbook
 

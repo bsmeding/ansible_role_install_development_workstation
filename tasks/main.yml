@@ -19,7 +19,7 @@
 
 - name: Install Python packages (Common)
   command: python3 -m pip install {{ item }}
-  loop: "{{ common_tools.pip }}"
+  loop: "{{ (common_tools | default({})).pip | default([]) }}"
   become: "{{ 'no' if ansible_facts.system == 'Darwin' else 'yes' }}"
   register: pip_install_result
   changed_when: "'Successfully installed' in pip_install_result.stdout"

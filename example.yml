@@ -7,11 +7,10 @@
   hosts: localhost
   connection: local
   gather_facts: yes
-  
-  # Customize your settings here (optional)
-  # vars:
-  #   preferred_editor: "nano"
-  #   manage_custom_hosts: true
-  
+
+  # The role defaults are minimal; load your package lists and preferences from a vars file:
+  # vars_files:
+  #   - vars/workstation.yml
+
   roles:
     - bsmeding.install_development_workstation
