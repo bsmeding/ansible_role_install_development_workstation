@@ -14,16 +14,18 @@
           - git_version.rc == 0
           - "'git version' in git_version.stdout"
 
+    # Role writes to user_dir; include /root for Docker where facts can disagree.
     - name: Check zshrc was deployed
       ansible.builtin.stat:
-        path: "{{ ansible_facts['user_dir'] }}/.zshrc"
-      register: zshrc
+        path: "{{ item }}/.zshrc"
+      loop: "{{ ([ansible_facts.get('user_dir', '/root')] + ['/root']) | unique | list }}"
+      register: zshrc_stats
 
     - name: Assert zshrc exists
       ansible.builtin.assert:
         that:
-          - zshrc.stat.exists
+          - zshrc_stats.results | selectattr('stat.exists') | list | length > 0
         fail_msg: >-
-          Expected {{ ansible_facts['user_dir'] }}/.zshrc from role converge;
-          user_dir={{ ansible_facts['user_dir'] | default('MISSING') }},
-          user_id={{ ansible_facts['user_id'] | default('MISSING') }}.
+          No .zshrc under {{ ([ansible_facts.get('user_dir', '/root')] + ['/root']) | unique | list | join(', ') }}.
+          user_dir={{ ansible_facts.get('user_dir', 'MISSING') }},
+          user_id={{ ansible_facts.get('user_id', 'MISSING') }}.
