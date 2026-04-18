@@ -1,14 +1,14 @@
 ---
 - name: Check if custom plugin {{ item.name }} exists
   stat:
-    path: "{{ ansible_user_dir }}/.oh-my-zsh/custom/plugins/{{ item.name }}"
+    path: "{{ ansible_facts['user_dir'] }}/.oh-my-zsh/custom/plugins/{{ item.name }}"
   register: plugin_exists
   become: no
 
 - name: Install custom plugin {{ item.name }}
   git:
     repo: "{{ item.repo }}"
-    dest: "{{ ansible_user_dir }}/.oh-my-zsh/custom/plugins/{{ item.name }}"
+    dest: "{{ ansible_facts['user_dir'] }}/.oh-my-zsh/custom/plugins/{{ item.name }}"
     update: yes
   become: no
   when: not plugin_exists.stat.exists

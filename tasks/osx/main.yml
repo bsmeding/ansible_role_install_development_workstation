@@ -23,14 +23,14 @@
 
 - name: macOS - Add Homebrew to PATH (Apple Silicon)
   lineinfile:
-    path: "{{ ansible_env.HOME }}/.zprofile"
+    path: "{{ ansible_facts['user_dir'] }}/.zprofile"
     line: 'eval "$(/opt/homebrew/bin/brew shellenv)"'
     create: yes
-  when: homebrew_arm_check.stat.exists or (not homebrew_installed and ansible_machine == "arm64")
+  when: homebrew_arm_check.stat.exists or (not homebrew_installed and ansible_facts['machine'] == "arm64")
 
 - name: macOS - Add Homebrew to PATH (Intel)
   lineinfile:
-    path: "{{ ansible_env.HOME }}/.zprofile"
+    path: "{{ ansible_facts['user_dir'] }}/.zprofile"
     line: 'eval "$(/usr/local/bin/brew shellenv)"'
     create: yes
   when: homebrew_intel_check.stat.exists and not homebrew_arm_check.stat.exists
@@ -70,7 +70,7 @@
       block:
         - name: macOS - Check if Oh My Zsh is already installed
           stat:
-            path: "{{ ansible_env.HOME }}/.oh-my-zsh"
+            path: "{{ ansible_facts['user_dir'] }}/.oh-my-zsh"
           register: ohmyzsh_check
           become: no
 
@@ -78,11 +78,11 @@
           shell: |
             sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
           args:
-            creates: "{{ ansible_env.HOME }}/.oh-my-zsh"
+            creates: "{{ ansible_facts['user_dir'] }}/.oh-my-zsh"
           when: not ohmyzsh_check.stat.exists
           become: no
           environment:
-            HOME: "{{ ansible_env.HOME }}"
+            HOME: "{{ ansible_facts['user_dir'] }}"
 
         - name: macOS - Install custom Oh My Zsh plugins
           include_tasks: install_ohmyzsh_plugin.yml
@@ -103,7 +103,7 @@
 - name: macOS - Set zsh as default shell
   shell: chsh -s /bin/zsh
   become: yes
-  when: ansible_env.SHELL != "/bin/zsh"
+  when: ansible_facts['user_shell'] | default('') != "/bin/zsh"
   failed_when: false
 
 - name: macOS - Get the actual user (not root)
@@ -193,7 +193,7 @@
 
     - name: macOS - Create iTerm2 DynamicProfiles directory
       file:
-        path: "{{ ansible_env.HOME }}/Library/Application Support/iTerm2/DynamicProfiles"
+        path: "{{ ansible_facts['user_dir'] }}/Library/Application Support/iTerm2/DynamicProfiles"
         state: directory
         mode: '0755'
       when: iterm2_check.stat.exists
@@ -201,7 +201,7 @@
     - name: macOS - Deploy iTerm2 development profile
       template:
         src: iterm2_prefs.j2
-        dest: "{{ ansible_env.HOME }}/Library/Application Support/iTerm2/DynamicProfiles/ansible_profile.json"
+        dest: "{{ ansible_facts['user_dir'] }}/Library/Application Support/iTerm2/DynamicProfiles/ansible_profile.json"
         mode: '0644'
       when: iterm2_check.stat.exists
 
@@ -275,6 +275,7 @@
         - configure_dock
         - dockutil_check.rc == 0
         - dockitems_remove is defined
+        - item.rc is defined
         - item.rc == 0
       register: dock_remove_result
       changed_when: "'was removed' in dock_remove_result.stdout"
@@ -306,11 +307,12 @@
 
     - name: macOS - Create list of apps already in Dock
       set_fact:
-        apps_in_dock: "{{ apps_in_dock | default([]) + [item.item.name] }}"
+        apps_in_dock: "{{ apps_in_dock | default([]) + [item.item.item.name] }}"
       loop: "{{ dock_app_check.results | default([]) }}"
       when:
         - configure_dock
         - dockutil_check.rc == 0
+        - item.rc is defined
         - item.rc == 0
       become: no
 

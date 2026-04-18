@@ -52,7 +52,7 @@
     - name: Set up Zsh config
       template:
         src: .zshrc.j2
-        dest: "{{ ansible_env.HOME }}/.zshrc"
+        dest: "{{ ansible_facts['user_dir'] }}/.zshrc"
       when: os_settings.zsh
 
     - name: Install Bash if needed
@@ -64,12 +64,12 @@
     - name: Set up Bash config
       template:
         src: .bashrc.j2
-        dest: "{{ ansible_env.HOME }}/.bashrc"
+        dest: "{{ ansible_facts['user_dir'] }}/.bashrc"
       when: os_settings.bash
 
     - name: Set environment variables
       lineinfile:
-        path: "{{ ansible_env.HOME }}/.profile"
+        path: "{{ ansible_facts['user_dir'] }}/.profile"
         line: "export {{ item.name }}={{ item.value }}"
         create: yes
       loop: "{{ os_settings.environment_variables }}"
@@ -78,13 +78,13 @@
       block:
         - name: Enable Zsh color scheme
           lineinfile:
-            path: "{{ ansible_env.HOME }}/.zshrc"
+            path: "{{ ansible_facts['user_dir'] }}/.zshrc"
             line: "export ZSH_HIGHLIGHT_STYLES='fg=cyan,bold'"
           when: os_settings.color_scheme
 
         - name: Enable Bash color scheme
           lineinfile:
-            path: "{{ ansible_env.HOME }}/.bashrc"
+            path: "{{ ansible_facts['user_dir'] }}/.bashrc"
             line: "export LS_COLORS='di=0;35'"
           when: os_settings.color_scheme
 
@@ -100,7 +100,7 @@
     - name: Install Sublime Text Package Control
       git:
         repo: https://github.com/wbond/package_control
-        dest: "{{ ansible_env.HOME }}/Library/Application Support/Sublime Text 3/Packages/Package Control"
+        dest: "{{ ansible_facts['user_dir'] }}/Library/Application Support/Sublime Text 3/Packages/Package Control"
       when: common_tools.sublime_text_plugins | length > 0
 
     - name: Install Sublime Text plugins

@@ -24,7 +24,7 @@
 
     - name: Ubuntu - Add Docker repository
       apt_repository:
-        repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+        repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_facts['distribution_release'] }} stable"
         state: present
       become: yes
       ignore_errors: yes
@@ -48,7 +48,7 @@
 
 - name: Ubuntu - Add user to docker group
   user:
-    name: "{{ ansible_user_id }}"
+    name: "{{ ansible_facts['user_id'] }}"
     groups: docker
     append: yes
   become: yes
@@ -72,7 +72,7 @@
 
     - name: Ubuntu - Create Ghostty config directory
       file:
-        path: "{{ ansible_user_dir }}/.config/ghostty"
+        path: "{{ ansible_facts['user_dir'] }}/.config/ghostty"
         state: directory
         mode: '0755'
       when: ghostty_check.rc == 0
@@ -81,7 +81,7 @@
     - name: Ubuntu - Deploy Ghostty configuration
       template:
         src: ghostty.conf.j2
-        dest: "{{ ansible_user_dir }}/.config/ghostty/config"
+        dest: "{{ ansible_facts['user_dir'] }}/.config/ghostty/config"
         mode: '0644'
         backup: yes
       when: ghostty_check.rc == 0
@@ -93,7 +93,7 @@
       block:
         - name: Ubuntu - Check if Oh My Zsh is already installed
           stat:
-            path: "{{ ansible_user_dir }}/.oh-my-zsh"
+            path: "{{ ansible_facts['user_dir'] }}/.oh-my-zsh"
           register: ohmyzsh_check
           become: no
 
@@ -101,11 +101,11 @@
           shell: |
             sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
           args:
-            creates: "{{ ansible_user_dir }}/.oh-my-zsh"
+            creates: "{{ ansible_facts['user_dir'] }}/.oh-my-zsh"
           when: not ohmyzsh_check.stat.exists
           become: no
           environment:
-            HOME: "{{ ansible_user_dir }}"
+            HOME: "{{ ansible_facts['user_dir'] }}"
 
         - name: Ubuntu - Install custom Oh My Zsh plugins
           include_tasks: install_ohmyzsh_plugin.yml
@@ -118,29 +118,29 @@
     - name: Ubuntu - Configure zshrc
       template:
         src: zshrc.j2
-        dest: "{{ ansible_user_dir }}/.zshrc"
+        dest: "{{ ansible_facts['user_dir'] }}/.zshrc"
         backup: yes
         mode: '0644'
       become: no
 
     - name: Ubuntu - Set zsh as default shell
       user:
-        name: "{{ ansible_user_id }}"
+        name: "{{ ansible_facts['user_id'] }}"
         shell: /usr/bin/zsh
       become: yes
-      when: ansible_facts['env']['SHELL'] | default('') != "/usr/bin/zsh"
+      when: ansible_facts['user_shell'] | default('') != "/usr/bin/zsh"
 
 - name: Ubuntu - Deploy Ansible user configuration
   template:
     src: ansible.cfg.j2
-    dest: "{{ ansible_user_dir }}/.ansible.cfg"
+    dest: "{{ ansible_facts['user_dir'] }}/.ansible.cfg"
     mode: '0644'
     backup: yes
   become: no
 
 - name: Ubuntu - Create ansible directory
   file:
-    path: "{{ ansible_user_dir }}/ansible"
+    path: "{{ ansible_facts['user_dir'] }}/ansible"
     state: directory
     mode: '0755'
   become: no
@@ -148,7 +148,7 @@
 - name: Ubuntu - Deploy Ansible development configuration
   template:
     src: ansible_dev.cfg.j2
-    dest: "{{ ansible_user_dir }}/ansible/.ansible.cfg"
+    dest: "{{ ansible_facts['user_dir'] }}/ansible/.ansible.cfg"
     mode: '0644'
     backup: yes
   become: no

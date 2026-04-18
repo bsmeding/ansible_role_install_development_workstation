@@ -4,7 +4,7 @@
       "Name": "Development Profile",
       "Guid": "ansible-dev-profile",
       "Badge Text": "DEV",
-      "Working Directory": "{{ ansible_env.HOME }}",
+      "Working Directory": "{{ ansible_facts['user_dir'] }}",
       "Custom Directory": "Yes",
       "Initial Text": "",
       "Horizontal Spacing": 1,
