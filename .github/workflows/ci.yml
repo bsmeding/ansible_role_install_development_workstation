@@ -25,7 +25,7 @@ jobs:
           - ubuntu2404
     steps:
       - name: Check out the codebase.
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           path: 'bsmeding.install_development_workstation'
 
